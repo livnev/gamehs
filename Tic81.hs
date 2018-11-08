@@ -31,7 +31,7 @@ boardState (Tic81State bs _ _) = bs
 instance GameState Tic81State where
   whoseMove (Tic81State _ who _) = who
   showState gs = let Tic81State bs _ _ = gs
-                     rows = map (\i -> blockConcat (map (\p -> (showTic9Board (peek81 bs (Tic9Pos p)))) [(i, 1), (i, 2), (i, 3)])) [1,2,3]
+                     rows = map (\i -> blockConcat (map (\p -> (showTic9Board (peek81 bs p))) (makeTic9Row i))) [0, 1, 2]
                      in intercalate "\n" rows
   result gs = let Tic81State bs81 _ _ = gs
                   bs9 = quotient81Board bs81
@@ -68,7 +68,8 @@ move81 gs (sector, p) = let Tic81State bs player _ = gs
                         in case m_subgs' of
                              Nothing -> Nothing
                              Just subgs' -> let (Tic9State subbs' _) = subgs'
-                                                next = if isNothing (resultBoard (peek81 bs p)) then Just p else Nothing
+                                                p_bs' = if sector == p then subbs' else peek81 bs p
+                                                next = if isNothing (resultBoard p_bs') then Just p else Nothing
                                             in
                                Just (Tic81State (Tic81Board (Map.adjust (\x -> subbs') sector (Tic81.boardMap bs))) (otherPlayer player) next)
 
@@ -115,16 +116,18 @@ blockJoin s t  = let s_split  = (splitOn "\n" s)
                   in intercalate "\n" concatLines
 
 blockConcat :: [String] -> String
-blockConcat [] = []
-blockConcat (s:ss) = blockJoin s (blockConcat ss)
+-- blockConcat [] = []
+-- blockConcat (s:ss) = blockJoin s (blockConcat ss)
+blockConcat = foldr blockJoin ""
 
 -- human input for controller
+-- an extension/wrapper around humanTic9Input
 humanTic81Input :: Tic81State -> IO Tic81Pos
 humanTic81Input gs = do
   let Tic81State bs player m_sector = gs
   case m_sector of
     Just sector -> do
-      putStrLn ("Playing in square " ++ (show (pos2int sector)))
+      putStrLn ("Playing in square " ++ (show sector))
       pos <- humanTic9Input gs
       return (asTic81Pos pos)
     Nothing -> do
@@ -136,9 +139,3 @@ humanTic81Input gs = do
         Just sec -> do
           pos <- humanTic9Input (Tic81State bs player (Just sec))
           return (Tic81Pos (Right (sec, pos)))
-
-inputLine2Pos :: String -> Maybe Tic9Pos
-inputLine2Pos playerMove = let m_pos = readMaybe playerMove :: Maybe Int in case m_pos of
-  Nothing -> Nothing
-  Just p  -> Just (int2pos p)
-

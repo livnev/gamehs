@@ -28,7 +28,10 @@ main = do
     Just False -> putStrLn "Exiting..."
     Just True  -> do
       putStrLn "Starting new game..."
-      result <- playGame humanTic81Controller monte1000Controller initTic81
+      let human = humanTic81Controller
+          opponent = monte1000Controller
+          init = initTic81
+      result <- playGame human opponent init
       putStrLn (resultsDisplay result)
       putStrLn "The game has ended."
       main

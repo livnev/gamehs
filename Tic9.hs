@@ -8,8 +8,11 @@ import Data.Maybe (isNothing)
 
 import Game
 
-data Tic9Pos = Tic9Pos (Int, Int)
-  deriving (Eq, Ord, Show)
+data Tic9Pos = Tic9Pos Int
+  deriving (Eq, Ord)
+
+instance Show Tic9Pos where
+  show (Tic9Pos x) = show x
 
 data Tic9Board = Tic9Board {
   boardMap :: Map.Map Tic9Pos Player
@@ -34,7 +37,7 @@ instance Game Tic9State Tic9Pos where
                      Just x  -> Nothing
                      Nothing -> Just (Tic9State (Tic9Board (Map.insert pos player board)) (otherPlayer player))
 
-boardPositions bs = let all_pos = map int2pos [1..9] in
+boardPositions bs = let all_pos = map Tic9Pos [1..9] in
                       filter (isNothing . (peek bs)) all_pos
 
 resultBoard :: Tic9Board -> Maybe Result
@@ -57,8 +60,11 @@ peek bs pos = let board = boardMap bs in
 initTic9 :: Tic9State
 initTic9 = Tic9State (Tic9Board Map.empty) One
 
+makeTic9Row :: Int -> [Tic9Pos]
+makeTic9Row i = map (Tic9Pos . (+i*3)) [1,2,3]
+
 showTic9Board :: Tic9Board -> String
-showTic9Board bs = let boardLines = map (\i -> (map (posChar . (peek bs)) [ Tic9Pos (i, 1), Tic9Pos (i, 2), Tic9Pos (i, 3)])) [1, 2, 3] in
+showTic9Board bs = let boardLines = map (\i -> (map (posChar . (peek bs)) (makeTic9Row i))) [0, 1, 2] in
   "|" ++ intersperse '|' (boardLines !! 0) ++ "|" ++ "\n"
   ++ "|" ++ intersperse '|' (boardLines !! 1) ++ "|" ++ "\n"
   ++ "|" ++ intersperse '|' (boardLines !! 2) ++ "|" ++ "\n"
@@ -79,21 +85,30 @@ int2coord 7 = (3, 1)
 int2coord 8 = (3, 2)
 int2coord 9 = (3, 3)
 
-int2pos :: Int -> Tic9Pos
-int2pos x = Tic9Pos (int2coord x)
+-- int2pos :: Int -> Tic9Pos
+-- int2pos x = Tic9Pos (int2coord x)
 
-pos2int :: Tic9Pos -> Int
-pos2int (Tic9Pos (x, y)) = y + (x-1)*3
+-- pos2int :: Tic9Pos -> Int
+-- pos2int (Tic9Pos (x, y)) = y + (x-1)*3
 
 genSlices :: [[Tic9Pos]]
-genSlices = (fmap . fmap) Tic9Pos [[(1, 1), (1, 2), (1, 3)],
-                                   [(2, 1), (2, 2), (2, 3)],
-                                   [(3, 1), (3, 2), (3, 3)],
-                                   [(1, 1), (2, 1), (3, 1)],
-                                   [(1, 2), (2, 2), (3, 2)],
-                                   [(1, 3), (2, 3), (3, 3)],
-                                   [(1, 1), (2, 2), (3, 3)],
-                                   [(1, 3), (2, 2), (3, 1)]]
+genSlices = (fmap . fmap) Tic9Pos [[1, 2, 3],
+                                   [4, 5, 6],
+                                   [7, 8, 9],
+                                   [1, 4, 7],
+                                   [2, 5, 8],
+                                   [3, 6, 9],
+                                   [1, 5, 9],
+                                   [3, 5, 7]]
+            
+-- genSlices = (fmap . fmap) Tic9Pos [[(1, 1), (1, 2), (1, 3)],
+--                                    [(2, 1), (2, 2), (2, 3)],
+--                                    [(3, 1), (3, 2), (3, 3)],
+--                                    [(1, 1), (2, 1), (3, 1)],
+--                                    [(1, 2), (2, 2), (3, 2)],
+--                                    [(1, 3), (2, 3), (3, 3)],
+--                                    [(1, 1), (2, 2), (3, 3)],
+--                                    [(1, 3), (2, 2), (3, 1)]]
 
 getSlice :: Tic9Board -> [Tic9Pos] -> [Char]
 getSlice bs []         = ""
@@ -112,9 +127,13 @@ humanTic9Input :: (Game s p) => s -> IO Tic9Pos
 humanTic9Input gs = do
   putStrLn ("Human player, enter your move: [1-9]")
   playerMove <- getLine
-  let m_pos = readMaybe playerMove :: Maybe Int
+  let m_pos = inputLine2Pos playerMove
   case m_pos of
     Nothing -> (putStrLn "Couldn't parse move.") >> humanTic9Input gs
-    Just p  -> do
-      let pos = (int2pos p)
+    Just pos  -> do
       return pos
+
+inputLine2Pos :: String -> Maybe Tic9Pos
+inputLine2Pos playerMove = let m_pos = readMaybe playerMove :: Maybe Int in case m_pos of
+  Nothing -> Nothing
+  Just p  -> if (0 > p) || (p > 9) then Nothing else Just (Tic9Pos p)
