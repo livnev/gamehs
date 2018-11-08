@@ -31,7 +31,7 @@ boardState (Tic81State bs _ _) = bs
 instance GameState Tic81State where
   whoseMove (Tic81State _ who _) = who
   showState gs = let Tic81State bs _ _ = gs
-                     rows = map (\i -> blockConcat (map (\p -> (showTic9Board (peek81 bs p))) (makeTic9Row i))) [0, 1, 2]
+                     rows = map (\i -> blockConcat (map (showTic9Board . (peek81 bs)) (makeTic9Row i))) [0, 1, 2]
                      in intercalate "\n" rows
   result gs = let Tic81State bs81 _ _ = gs
                   bs9 = quotient81Board bs81
@@ -70,8 +70,9 @@ move81 gs (sector, p) = let Tic81State bs player _ = gs
                              Just subgs' -> let (Tic9State subbs' _) = subgs'
                                                 p_bs' = if sector == p then subbs' else peek81 bs p
                                                 next = if isNothing (resultBoard p_bs') then Just p else Nothing
+                                                new_board = Tic81Board (Map.adjust (\_ -> subbs') sector (Tic81.boardMap bs))
                                             in
-                               Just (Tic81State (Tic81Board (Map.adjust (\x -> subbs') sector (Tic81.boardMap bs))) (otherPlayer player) next)
+                               Just (Tic81State new_board (otherPlayer player) next)
 
 tupleZip :: [a] -> [[b]] -> [(a, b)]
 tupleZip xs ys = join (tupleDistribute (zip xs ys))
