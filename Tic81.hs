@@ -7,7 +7,7 @@ import Data.List.Split (splitOn)
 import Data.List (intercalate)
 import qualified Data.Map.Strict as Map
 import qualified Data.Map (map)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, isNothing)
 import Control.Monad (join)
 
 import Tic9
@@ -68,7 +68,7 @@ move81 gs (sector, p) = let Tic81State bs player _ = gs
                         in case m_subgs' of
                              Nothing -> Nothing
                              Just subgs' -> let (Tic9State subbs' _) = subgs'
-                                                next = if checkFull (peek81 bs p) then Nothing else Just p
+                                                next = if isNothing (resultBoard (peek81 bs p)) then Just p else Nothing
                                             in
                                Just (Tic81State (Tic81Board (Map.adjust (\x -> subbs') sector (Tic81.boardMap bs))) (otherPlayer player) next)
 
