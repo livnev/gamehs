@@ -127,12 +127,6 @@ humanTic81Input gs = do
       putStrLn ("Playing in square " ++ (show (pos2int sector)))
       pos <- humanTic9Input gs
       return (asTic81Pos pos)
-      -- putStrLn "Human player, enter your move: [1-9]"
-      -- playerMove <- getLine
-      -- let m_pos = inputLine2Pos playerMove
-      -- case m_pos of
-      --   Nothing -> (putStrLn "Couldn't parse move.") >> humanTic81Input gs
-      --   Just pos -> return (asTic81Pos pos)
     Nothing -> do
       putStrLn ("Human player, choose a square to play in: [1-9]")
       playerMove <- getLine

@@ -53,9 +53,6 @@ resultBoard bs = let full   = checkFull bs
 peek :: Tic9Board -> Tic9Pos -> Maybe Player
 peek bs pos = let board = boardMap bs in
                 Map.lookup pos board
-                
--- peek :: Tic9State -> Tic9Pos -> Maybe Player
--- peek gs pos = let bs = boardState gs in peek bs pos
 
 initTic9 :: Tic9State
 initTic9 = Tic9State (Tic9Board Map.empty) One
