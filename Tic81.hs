@@ -23,7 +23,7 @@ data Tic81State = Tic81State Tic81Board Player (Maybe Tic9Pos)
 data Tic81Pos = Tic81Pos (Either Tic9Pos (Tic9Pos, Tic9Pos))
 
 asTic81Pos :: Tic9Pos -> Tic81Pos
-asTic81Pos x = Tic81Pos (Left x)
+asTic81Pos = Tic81Pos . Left
 
 boardState :: Tic81State -> Tic81Board
 boardState (Tic81State bs _ _) = bs
@@ -50,12 +50,12 @@ instance Game Tic81State Tic81Pos where
                       Nothing -> let bs9 = quotient81Board bs
                                      sectors = positions (Tic9State bs9 player)
                                      poss = map (\sector -> positions (Tic9State (peek81 bs sector) player)) sectors
-                                 in map (\xy -> Tic81Pos (Right xy)) (tupleZip sectors poss)
+                                 in map (Tic81Pos . Right) (tupleZip sectors poss)
   move gs pos = let Tic81State bs player m_sector = gs
                 in case m_sector of
                      Just sector -> case pos of
                                       Tic81Pos (Right _) -> Nothing
-                                      Tic81Pos (Left p) -> move81 gs (sector, p)
+                                      Tic81Pos (Left p)  -> move81 gs (sector, p)
                      Nothing -> case pos of
                                   Tic81Pos (Left _) -> Nothing
                                   Tic81Pos (Right (sector, p)) -> move81 gs (sector, p)
@@ -67,10 +67,10 @@ move81 gs (sector, p) = let Tic81State bs player _ = gs
                             m_subgs' = move (Tic9State subbs player) p
                         in case m_subgs' of
                              Nothing -> Nothing
-                             Just subgs' -> let (Tic9State subbs' _) = subgs'
-                                                p_bs' = if sector == p then subbs' else peek81 bs p
-                                                next = if isNothing (resultBoard p_bs') then Just p else Nothing
-                                                new_board = Tic81Board (Map.adjust (\_ -> subbs') sector (Tic81.boardMap bs))
+                             Just subgs' -> let Tic9State subbs' _ = subgs'
+                                                p_bs'     = if sector == p then subbs' else peek81 bs p
+                                                next      = if isNothing (resultBoard p_bs') then Just p else Nothing
+                                                new_board = Tic81Board (Map.adjust (const subbs') sector (Tic81.boardMap bs))
                                             in
                                Just (Tic81State new_board (otherPlayer player) next)
 
@@ -79,12 +79,12 @@ tupleZip xs ys = join (tupleDistribute (zip xs ys))
 
 tupleDistribute :: [(a, [b])] -> [[(a, b)]]
 tupleDistribute [] = []
-tupleDistribute ((x, ys):xys) = (map (\y -> (x, y)) ys) : (tupleDistribute xys)                                 
+tupleDistribute ((x, ys):xys) = (map ((,) x) ys) : (tupleDistribute xys)                                 
 
 quotient81Board :: Tic81Board -> Tic9Board
-quotient81Board (Tic81Board board) = let res2player (Just (Result (Left who))) = Just who
+quotient81Board (Tic81Board board) = let res2player (Just (Result (Left who)))       = Just who
                                          res2player (Just (Result (Right (Draw _)))) = Nothing
-                                         res2player Nothing = Nothing
+                                         res2player Nothing                          = Nothing
                                      in Tic9Board (Map.mapMaybe (res2player . resultBoard) board) where 
 
 initTic81 :: Tic81State
@@ -95,7 +95,7 @@ initTic81 = let ps  = (positions initTic9)
 peek81 :: Tic81Board -> Tic9Pos -> Tic9Board
 peek81 bs pos = let board = Tic81.boardMap bs
                 in case Map.lookup pos board of
-                     Just x -> x
+                     Just x  -> x
                      Nothing -> (Tic9Board Map.empty)
 
 padTo :: Int -> a -> [a] -> [a]
@@ -113,12 +113,10 @@ blockJoin s [] = s
 blockJoin s t  = let s_split  = (splitOn "\n" s)
                      t_split  = (splitOn "\n" t)
                      s_padded = padLines s_split
-                     concatLines = map (\(x, y) -> x ++ y) (zip s_padded t_split)
+                     concatLines = map (uncurry (++)) (zip s_padded t_split)
                   in intercalate "\n" concatLines
 
 blockConcat :: [String] -> String
--- blockConcat [] = []
--- blockConcat (s:ss) = blockJoin s (blockConcat ss)
 blockConcat = foldr blockJoin ""
 
 -- human input for controller

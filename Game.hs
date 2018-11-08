@@ -15,10 +15,6 @@ class (GameState s) => Game s p | s -> p where
 data Player = One | Two
   deriving (Eq, Ord, Show)
 
-otherPlayer :: Player -> Player
-otherPlayer One = Two
-otherPlayer Two = One
-
 data Draw = Draw ()
   deriving (Eq, Ord, Show)
 
@@ -28,6 +24,10 @@ data Result = Result (Either Player Draw)
 data Controller s = Controller {
   makeMove :: s -> IO s
   }
+
+otherPlayer :: Player -> Player
+otherPlayer One = Two
+otherPlayer Two = One
 
 playGame :: (Game s p) => (Controller s) -> (Controller s) -> s -> IO Result
 playGame c1 c2 gs = do

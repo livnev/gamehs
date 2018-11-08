@@ -33,9 +33,10 @@ instance Game Tic9State Tic9Pos where
   move gs pos = let player = whoseMove gs
                     bs     = boardState gs
                     board  = boardMap bs
+                    new_board = Tic9Board (Map.insert pos player board)
                 in case peek bs pos of
                      Just x  -> Nothing
-                     Nothing -> Just (Tic9State (Tic9Board (Map.insert pos player board)) (otherPlayer player))
+                     Nothing -> Just (Tic9State new_board (otherPlayer player))
 
 boardPositions bs = let all_pos = map Tic9Pos [1..9] in
                       filter (isNothing . (peek bs)) all_pos
@@ -74,23 +75,6 @@ posChar (Just One) = 'o'
 posChar (Just Two) = 'x'
 posChar Nothing    = ' '
 
-int2coord :: Int -> (Int, Int)
-int2coord 1 = (1, 1)
-int2coord 2 = (1, 2)
-int2coord 3 = (1, 3)
-int2coord 4 = (2, 1)
-int2coord 5 = (2, 2)
-int2coord 6 = (2, 3)
-int2coord 7 = (3, 1)
-int2coord 8 = (3, 2)
-int2coord 9 = (3, 3)
-
--- int2pos :: Int -> Tic9Pos
--- int2pos x = Tic9Pos (int2coord x)
-
--- pos2int :: Tic9Pos -> Int
--- pos2int (Tic9Pos (x, y)) = y + (x-1)*3
-
 genSlices :: [[Tic9Pos]]
 genSlices = (fmap . fmap) Tic9Pos [[1, 2, 3],
                                    [4, 5, 6],
@@ -100,15 +84,6 @@ genSlices = (fmap . fmap) Tic9Pos [[1, 2, 3],
                                    [3, 6, 9],
                                    [1, 5, 9],
                                    [3, 5, 7]]
-            
--- genSlices = (fmap . fmap) Tic9Pos [[(1, 1), (1, 2), (1, 3)],
---                                    [(2, 1), (2, 2), (2, 3)],
---                                    [(3, 1), (3, 2), (3, 3)],
---                                    [(1, 1), (2, 1), (3, 1)],
---                                    [(1, 2), (2, 2), (3, 2)],
---                                    [(1, 3), (2, 3), (3, 3)],
---                                    [(1, 1), (2, 2), (3, 3)],
---                                    [(1, 3), (2, 2), (3, 1)]]
 
 getSlice :: Tic9Board -> [Tic9Pos] -> [Char]
 getSlice bs []         = ""
